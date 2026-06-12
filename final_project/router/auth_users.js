@@ -64,7 +64,32 @@ regd_users.post("/login", (req,res) => {
 regd_users.put("/auth/review/:isbn", (req, res) => {
   //Write your code here
   //return res.status(300).json({message: "Yet to be implemented"});
+  // isbn parameter from request URL
+    const isbn = req.params.isbn;
+    let booktoupdate = books[isbn];   //Retrieve book object associated with isbn
 
+  if (booktoupdate) {   //Check if books exists
+        let author = req.body.author;
+        let title = req.body.title;
+        let reviews = req.body.reviews;
+
+       //Update isbn if provided in request body
+        if (author) {
+            booktoupdate[author] = author;
+        }
+        if (title) {
+            booktoupdate[title] = title;
+        }
+        if (reviews) {
+            booktoupdate[reviews] = reviews;
+        }
+
+        books[isbn] = booktoupdate; //Update book details in 'books' object
+        res.send(`Book with the isbn ${isbn} updated.`);
+    } else {
+       //Respond if book with specified isbn is not found
+        res.send(`Unable to find the book!`);
+    }
 });
 
 module.exports.authenticated = regd_users;
