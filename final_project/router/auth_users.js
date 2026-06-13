@@ -67,30 +67,58 @@ regd_users.put("/auth/review/:isbn", (req, res) => {
   // isbn parameter from request URL
     const isbn = req.params.isbn;
     let booktoupdate = books[isbn];   //Retrieve book object associated with isbn
-
-  if (booktoupdate) {   //Check if books exists
-        let author = req.body.author;
-        let title = req.body.title;
-        let reviews = req.body.reviews;
-
-       //Update isbn if provided in request body
-        if (author) {
-            booktoupdate[author] = author;
-        }
-        if (title) {
-            booktoupdate[title] = title;
-        }
-        if (reviews) {
-            booktoupdate[reviews] = reviews;
-        }
-
-        books[isbn] = booktoupdate; //Update book details in 'books' object
-        res.send(`Book with the isbn ${isbn} updated.`);
+    
+    if (booktoupdate) {   //Check if books exists       
+        const review = req.body.review;
+       //Update review if provided in request body
+        if (review) {
+            const reviewuser = req.body.username;
+            if(booktoupdate.reviews.length !== 0){
+                let reviewbyuser = booktoupdate.reviews.find(item => item.user === reviewuser);
+                if (reviewbyuser) {
+                    reviewbyuser.review = review;  
+                } else {
+                    booktoupdate.reviews.push({"user":reviewuser , "review": review});                
+                } 
+            }else{
+                booktoupdate.reviews.push({"user":reviewuser , "review": review});                  
+            }
+            
+            books[isbn] = booktoupdate; //Update book details in 'books' object
+            res.send(`Book with the isbn ${isbn} updated.`); 
+        }else{
+            res.send(`no reviews added`);     
+        }      
     } else {
        //Respond if book with specified isbn is not found
         res.send(`Unable to find the book!`);
     }
 });
+
+//Delete a review by isbn id
+regd_users.delete("/auth/review/:isbn", (req, res) => {
+    //Extract isbn parameter from request URL
+    const isbn = req.params.isbn;   
+    if (isbn) {
+        const reviewuser = req.body.username;
+        let bookreviews = books[isbn];  //Retrieve book object associated with isbn
+        if(bookreviews.reviews.length !== 0){
+            let reviewbyuser = bookreviews.reviews.findIndex(item => item.user === reviewuser);
+            if (reviewbyuser !== -1) {
+                bookreviews.reviews.splice(reviewbyuser, 1);
+                res.send(`review with the isbn: ${isbn} deleted.`);
+            } else {
+                res.send(`No reviews were found to remove.`);                 
+            } 
+        }else{
+            return res.status(209).json({ message: "There are no reviews to remove." });
+        }
+    }else{
+        return res.status(209).json({ message: "The review to be deleted was not entered." });
+    }
+});
+   
+
 
 module.exports.authenticated = regd_users;
 module.exports.isValid = isValid;
